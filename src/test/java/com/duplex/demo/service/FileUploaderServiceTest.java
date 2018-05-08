@@ -26,16 +26,12 @@ import java.io.IOException;
 @Transactional
 public class FileUploaderServiceTest {
 
-  private ClassLoader classLoader;
-
-  @Autowired private FileUploaderService fileUploader;
-
+  @ClassRule
+  public static KafkaEmbedded embeddedKafka = new KafkaEmbedded(1, true, "DataForPresenter");
   @Value("${kafka.topic.name}")
   private static String topicName;
-
-  @ClassRule
-  public static KafkaEmbedded embeddedKafka =
-      new KafkaEmbedded(1, true, "DataForPresenter");
+  private ClassLoader classLoader;
+  @Autowired private FileUploaderService fileUploader;
 
   @Before
   public void setUp() {

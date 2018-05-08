@@ -31,41 +31,33 @@ import static org.junit.Assert.*;
 @Transactional
 public class CSVCrunchingServiceTest {
 
-    private ClassLoader classLoader;
+  @ClassRule
+  public static KafkaEmbedded embeddedKafka = new KafkaEmbedded(1, true, "DataForPresenter");
+  @Value("${kafka.topic.name}")
+  private static String topicName;
+  private ClassLoader classLoader;
+  @Autowired private FileUploaderService fileUploader;
+  @Autowired private CSVRepository repository;
 
-    @Autowired
-    private FileUploaderService fileUploader;
+  @Before
+  public void setUp() {
+    classLoader = getClass().getClassLoader();
+  }
 
-    @Autowired private CSVRepository repository;
+  @Test
+  public void testUploadAndCSVStats() throws IOException {
+    File csvFile = new File(classLoader.getResource("data.csv").getFile());
+    FileInputStream input = new FileInputStream(csvFile);
+    MultipartFile multipartFile =
+        new MockMultipartFile("file", csvFile.getName(), "text/plain", IOUtils.toByteArray(input));
 
-    @Value("${kafka.topic.name}")
-    private static String topicName;
+    fileUploader.uploadFile(multipartFile);
+    Assert.assertEquals(0, fileUploader.getLatch().getCount());
 
-    @ClassRule
-    public static KafkaEmbedded embeddedKafka =
-            new KafkaEmbedded(1, true, "DataForPresenter");
-
-    @Before
-    public void setUp() {
-        classLoader = getClass().getClassLoader();
-    }
-
-    @Test
-    public void testUploadAndCSVStats() throws IOException {
-        File csvFile = new File(classLoader.getResource("data.csv").getFile());
-        FileInputStream input = new FileInputStream(csvFile);
-        MultipartFile multipartFile =
-                new MockMultipartFile("file", csvFile.getName(), "text/plain", IOUtils.toByteArray(input));
-
-        fileUploader.uploadFile(multipartFile);
-        Assert.assertEquals(0, fileUploader.getLatch().getCount());
-
-        Assert.assertEquals(1, repository.count());
-        Iterator<CSVHistory> iterator = repository.findAll().iterator();
-        CSVHistory history = iterator.next();
-        Assert.assertEquals(1, history.getNumFiles());
-        Assert.assertEquals(6, history.getNumLines());
-
-
-    }
+    Assert.assertEquals(1, repository.count());
+    Iterator<CSVHistory> iterator = repository.findAll().iterator();
+    CSVHistory history = iterator.next();
+    Assert.assertEquals(1, history.getNumFiles());
+    Assert.assertEquals(6, history.getNumLines());
+  }
 }

@@ -26,10 +26,8 @@ import org.springframework.test.web.servlet.setup.MockMvcBuilders;
 import org.springframework.transaction.annotation.Transactional;
 import org.springframework.web.client.RestTemplate;
 import org.springframework.web.context.WebApplicationContext;
-import org.springframework.web.multipart.MultipartFile;
 
 import javax.annotation.Resource;
-
 import java.io.File;
 import java.io.FileInputStream;
 
@@ -44,30 +42,20 @@ import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.
 @Transactional
 public class DataPlatformControllerTest {
 
-  @Resource
-  private WebApplicationContext webApplicationContext;
-
-  private MockMvc mockMvc;
-
-  private RestTemplate restTemplate;
-
-  private ObjectMapper objectMapper = new ObjectMapper();
-
-  private ClassLoader classLoader;
-
   private static String BOOT_TOPIC = "DataForPresenter";
-
-  @Autowired
-  private Sender sender;
-
-  @ClassRule
-  public static KafkaEmbedded embeddedKafka = new KafkaEmbedded(1, true, BOOT_TOPIC);
+  @ClassRule public static KafkaEmbedded embeddedKafka = new KafkaEmbedded(1, true, BOOT_TOPIC);
+  @Resource private WebApplicationContext webApplicationContext;
+  private MockMvc mockMvc;
+  private RestTemplate restTemplate;
+  private ObjectMapper objectMapper = new ObjectMapper();
+  private ClassLoader classLoader;
+  @Autowired private Sender sender;
 
   @Before
   public void setUp() throws Exception {
     MockitoAnnotations.initMocks(this);
     mockMvc =
-            MockMvcBuilders.webAppContextSetup(webApplicationContext).dispatchOptions(true).build();
+        MockMvcBuilders.webAppContextSetup(webApplicationContext).dispatchOptions(true).build();
     restTemplate = new RestTemplate();
     IntegrationTestUtil.setTimeout(restTemplate, 5000);
     objectMapper.configure(DeserializationFeature.ACCEPT_SINGLE_VALUE_AS_ARRAY, true);
@@ -81,25 +69,25 @@ public class DataPlatformControllerTest {
   }
 
   @Test
-  public void testUploadCSVAndGetStats() throws Exception{
+  public void testUploadCSVAndGetStats() throws Exception {
     File csvFile = new File(classLoader.getResource("data.csv").getFile());
     FileInputStream input = new FileInputStream(csvFile);
-    MockMultipartFile  multipartFile =
-            new MockMultipartFile("file", csvFile.getName(), "text/plain", IOUtils.toByteArray(input));
+    MockMultipartFile multipartFile =
+        new MockMultipartFile("file", csvFile.getName(), "text/plain", IOUtils.toByteArray(input));
 
-    mockMvc.perform(MockMvcRequestBuilders.multipart(DataPlatformController.csvURI).file(multipartFile)).
-            andExpect(status().isOk());
+    mockMvc
+        .perform(
+            MockMvcRequestBuilders.multipart(DataPlatformController.csvURI).file(multipartFile))
+        .andExpect(status().isOk());
 
     String query = DataPlatformController.csvStatsURI;
     MvcResult result = mockMvc.perform(get(query)).andExpect(status().isOk()).andReturn();
 
     System.out.println(result.getResponse().getContentAsString());
     CSVHistory history =
-            objectMapper.readValue(
-                    result.getResponse().getContentAsByteArray(), CSVHistory.class);
+        objectMapper.readValue(result.getResponse().getContentAsByteArray(), CSVHistory.class);
     Assert.assertNotNull(history);
     Assert.assertEquals(1, history.getNumFiles());
     Assert.assertEquals(6, history.getNumLines());
-
   }
 }

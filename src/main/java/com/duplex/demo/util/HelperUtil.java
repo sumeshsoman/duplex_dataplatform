@@ -10,9 +10,7 @@ import java.util.stream.Collectors;
 public class HelperUtil {
 
   public static int getAverageAge(List<CSVDataDTO> csvDataDTOList) {
-    Double averageAge = csvDataDTOList
-            .stream()
-            .collect(Collectors.averagingInt(p -> p.getAge()));
+    Double averageAge = csvDataDTOList.stream().collect(Collectors.averagingInt(p -> p.getAge()));
     return averageAge.intValue();
   }
 
