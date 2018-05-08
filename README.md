@@ -2,7 +2,8 @@
 Repo for Duplex Data Platform
 
 # Rest API
-Swagger Documentation for this repo is available at localhost:8080/duplex/v1/swagger-ui.html
+Swagger Documentation for this repo is available at localhost:8085/duplex/v1/swagger-ui.html
+
 Start the application using command
 java -jar target\dataplatform-0.0.1-SNAPSHOT.jar
 
